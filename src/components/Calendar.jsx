@@ -533,7 +533,7 @@ const DayDetailModal = ({
                       type="checkbox"
                       checked={event.completed || false}
                       onChange={() => onToggleComplete(event.id)}
-                      className="mt-1.5 w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      className="mt-1.5 w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
                     />
                     <div className="flex-1">
                       <h4
@@ -730,11 +730,20 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
   };
 
   const handleToggleComplete = (eventId) => {
-    setEvents(
-      events.map((event) =>
-        event.id === eventId ? { ...event, completed: !event.completed } : event
-      )
+    const updatedEvents = events.map((event) =>
+      event.id === eventId ? { ...event, completed: !event.completed } : event
     );
+    setEvents(updatedEvents);
+
+    // Update the selected day's events immediately for instant UI update
+    if (selectedDay) {
+      const updatedEventsByDate = processEvents(updatedEvents);
+      const updatedDayEvents = updatedEventsByDate[selectedDay.dateString];
+      setSelectedDay({
+        ...selectedDay,
+        events: updatedDayEvents,
+      });
+    }
   };
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
