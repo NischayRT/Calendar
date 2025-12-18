@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,6 +6,7 @@ import {
   Calendar as CalendarIcon,
   X,
   Plus,
+  Trash2,
 } from "lucide-react";
 
 // ============================================================================
@@ -118,7 +119,7 @@ const detectConflicts = (events) => {
 
   sorted.forEach((event) => {
     const eventStart = timeToMinutes(event.startTime);
-    const eventEnd = timeToMinutes(event.endTime);
+    // const eventEnd = timeToMinutes(event.endTime); // Unused variable removed
 
     let placed = false;
     for (let i = 0; i < lanes.length; i++) {
@@ -161,74 +162,8 @@ const processEvents = (events) => {
 };
 
 // ============================================================================
-// DATA - Sample events
+// DATA - Preset colors
 // ============================================================================
-const SAMPLE_EVENTS = [
-  {
-    id: 1,
-    startTime: "00:00",
-    endTime: "01:30",
-    color: "#f6be23",
-    title: "Daily Standup",
-    date: "2024-12-18",
-    completed: false,
-  },
-  {
-    id: 2,
-    startTime: "09:00",
-    endTime: "10:30",
-    color: "#4a90e2",
-    title: "Team Planning",
-    date: "2024-12-18",
-    completed: false,
-  },
-  {
-    id: 3,
-    startTime: "09:30",
-    endTime: "11:00",
-    color: "#9b59b6",
-    title: "Design Sync",
-    date: "2024-12-18",
-    completed: false,
-  },
-  {
-    id: 4,
-    startTime: "14:00",
-    endTime: "15:00",
-    color: "#e24a90",
-    title: "Client Call",
-    date: "2024-12-20",
-    completed: false,
-  },
-  {
-    id: 5,
-    startTime: "10:00",
-    endTime: "11:00",
-    color: "#50c878",
-    title: "Design Review",
-    date: "2024-12-25",
-    completed: false,
-  },
-  {
-    id: 6,
-    startTime: "10:30",
-    endTime: "12:00",
-    color: "#f6501e",
-    title: "Weekly Catchup",
-    date: "2024-12-25",
-    completed: false,
-  },
-  {
-    id: 7,
-    startTime: "16:00",
-    endTime: "17:00",
-    color: "#3498db",
-    title: "Sprint Demo",
-    date: "2024-12-25",
-    completed: false,
-  },
-];
-
 const PRESET_COLORS = [
   "#f6be23",
   "#4a90e2",
@@ -447,6 +382,7 @@ const DayDetailModal = ({
   onClose,
   onAddEvent,
   onToggleComplete,
+  onDeleteEvent,
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -458,8 +394,13 @@ const DayDetailModal = ({
   const handleAddEvent = (eventData) => {
     onAddEvent(eventData);
     setShowAddForm(false);
-    // Close the entire modal after adding event
     onClose();
+  };
+
+  const handleDelete = (eventId) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      onDeleteEvent(eventId);
+    }
   };
 
   return (
@@ -556,10 +497,19 @@ const DayDetailModal = ({
                         </span>
                       </div>
                     </div>
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
-                      style={{ backgroundColor: event.color }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: event.color }}
+                      />
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-colors group"
+                        title="Delete event"
+                      >
+                        <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -664,14 +614,22 @@ const CalendarDay = ({ day, onClick }) => {
 // ============================================================================
 // COMPONENT - Calendar (Main)
 // ============================================================================
-const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
+const Calendar = ({ events: initialEventsProp = [] }) => {
   const today = new Date();
   const [currentDate, setCurrentDate] = useState(today);
   const [direction, setDirection] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [events, setEvents] = useState(initialEvents);
+
+  // Initialize state with props
+  const [events, setEvents] = useState(initialEventsProp);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync with props if they change
+  useEffect(() => {
+    setEvents(initialEventsProp);
+  }, [initialEventsProp]);
 
   const eventsByDate = useMemo(() => processEvents(events), [events]);
 
@@ -713,7 +671,6 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
   };
 
   const handleDayClick = (day) => {
-    // Refresh the day's events before opening modal
     const dateString = day.dateString;
     const updatedEvents = eventsByDate[dateString];
     setSelectedDay({
@@ -728,7 +685,9 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
       id: Date.now(),
       completed: false,
     };
-    setEvents([...events, newEvent]);
+    const updatedEvents = [...events, newEvent];
+    setEvents(updatedEvents);
+    // Note: Changes won't persist to the file in a browser
   };
 
   const handleToggleComplete = (eventId) => {
@@ -737,7 +696,20 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
     );
     setEvents(updatedEvents);
 
-    // Update the selected day's events immediately for instant UI update
+    if (selectedDay) {
+      const updatedEventsByDate = processEvents(updatedEvents);
+      const updatedDayEvents = updatedEventsByDate[selectedDay.dateString];
+      setSelectedDay({
+        ...selectedDay,
+        events: updatedDayEvents,
+      });
+    }
+  };
+
+  const handleDeleteEvent = (eventId) => {
+    const updatedEvents = events.filter((event) => event.id !== eventId);
+    setEvents(updatedEvents);
+
     if (selectedDay) {
       const updatedEventsByDate = processEvents(updatedEvents);
       const updatedDayEvents = updatedEventsByDate[selectedDay.dateString];
@@ -793,6 +765,17 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
     if (direction === -1) return "opacity-0 translate-x-8";
     return "opacity-0 scale-95";
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading calendar...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col overflow-hidden">
@@ -851,7 +834,7 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
         </div>
       </div>
 
-      {/* Calendar grid - flexible height that fills remaining space */}
+      {/* Calendar grid */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <div
           className={`h-full transition-all duration-300 ease-in-out ${getAnimationClass()}`}
@@ -877,7 +860,6 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
           </div>
         </div>
       </div>
-
       {/* Month Picker Modal */}
       {showMonthPicker && (
         <MonthPickerModal
@@ -895,10 +877,10 @@ const Calendar = ({ initialEvents = SAMPLE_EVENTS }) => {
           onClose={() => setSelectedDay(null)}
           onAddEvent={handleAddEvent}
           onToggleComplete={handleToggleComplete}
+          onDeleteEvent={handleDeleteEvent}
         />
       )}
     </div>
   );
 };
-
 export default Calendar;
