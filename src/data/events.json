@@ -5,7 +5,7 @@
     "endTime": "01:30",
     "color": "#f6be23",
     "title": "Daily Standup",
-    "date": "2024-12-17"
+    "date": "2025-12-17"
   },
   {
     "id": 2,
@@ -13,7 +13,7 @@
     "endTime": "10:30",
     "color": "#4a90e2",
     "title": "Team Planning",
-    "date": "2024-12-17"
+    "date": "2025-12-17"
   },
   {
     "id": 3,
@@ -21,7 +21,7 @@
     "endTime": "11:00",
     "color": "#9b59b6",
     "title": "Design Sync",
-    "date": "2024-12-17"
+    "date": "2025-12-17"
   },
   {
     "id": 4,
@@ -29,7 +29,7 @@
     "endTime": "15:00",
     "color": "#e24a90",
     "title": "Client Call",
-    "date": "2024-12-18"
+    "date": "2025-12-18"
   },
   {
     "id": 5,
@@ -37,7 +37,7 @@
     "endTime": "11:00",
     "color": "#50c878",
     "title": "Design Review",
-    "date": "2024-12-20"
+    "date": "2025-12-20"
   },
   {
     "id": 6,
@@ -45,7 +45,7 @@
     "endTime": "12:00",
     "color": "#f6501e",
     "title": "Weekly Catchup",
-    "date": "2024-12-20"
+    "date": "2025-12-20"
   },
   {
     "id": 7,
@@ -53,6 +53,6 @@
     "endTime": "17:00",
     "color": "#3498db",
     "title": "Sprint Demo",
-    "date": "2024-12-20"
+    "date": "2025-12-20"
   }
 ]
