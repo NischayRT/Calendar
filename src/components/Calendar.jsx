@@ -458,6 +458,8 @@ const DayDetailModal = ({
   const handleAddEvent = (eventData) => {
     onAddEvent(eventData);
     setShowAddForm(false);
+    // Close the entire modal after adding event
+    onClose();
   };
 
   return (
